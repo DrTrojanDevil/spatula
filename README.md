@@ -90,7 +90,9 @@ a menu array of the form:
 ```
 
 * `parser` is a function receiving the populated template, and returning
-a parsed version of it. This is `Spatula.markdown` by default.
+a parsed version of it. This is `Spatula.markdown` by default. `parser` can
+also be used to perform operations on scraped data, eg. extracting URLs for
+a new set of menus.
 
 ###Spatula.markdown(html)
 
