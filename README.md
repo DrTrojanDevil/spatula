@@ -7,7 +7,7 @@ Because it's way easier than copy/pasting all the pages.
 ```javascript
 var S = require('spatula');
 
-var menu = S.menu('http://example.com','nav > ul > li','ul > li');
+var menu = new S.Menu('http://example.com','nav > ul > li','ul > li');
 
 var template = {
   'title': 'h1#title',
@@ -24,9 +24,9 @@ S.scrape(save,menu,template);
 
 ##API:
 
-###Spatula.menu(url,paths...)
+###Spatula.Menu(url,paths...)
 
-Returns a menu object.
+Constructor, returns `Spatula.Menu` object.
 
 `url` is a URL. Each `path` argument is used as a
 [cheerio](http://matthewmueller.github.io/cheerio/) selector, and Spatula
