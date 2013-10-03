@@ -26,6 +26,44 @@ var Spatula = {
     }
   },
   'markdown': function(html) {
+    var replacements = {
+      'p':'r\n\r\n',
+      'ul':'r\n\r\n',
+      'div':'r\n\r\n',
+      'td':'r\n\r\n',
+      'li':' * ',
+      'h1':'#',
+      'h2':'##',
+      'h3':'###',
+      'h4':'####',
+      'h5':'#####',
+      'h6':'######',
+      'a': function ($anchor) {
+        return '[' + $anchor.text() + ']('+ $anchor.attr('href')+')';
+      },
+      'em': ['*','*'],
+      'i': ['*','*'],
+      'strong': ['**','**'],
+      'b': ['**','**']
+    }
+    var keys = Object.keys(replacements);
+    var $ = cheerio.load(html);
+    for (var i=0; i<keys.length;i++) {
+      var $tag = $(keys[i]);
+      var replacement = replacements[keys[i]];
+      var newTag = '';
+      if (typeof replacement === 'string') {
+        var txt = $tag.html();
+        newTag = replacement + txt;
+      } else if (typeof replacement === 'array') {
+        var txt = $tag.html();
+        newTag = replacement[0] + txt + replacement[1];
+      } else if (typeof replacement === 'function') {
+        newTag = replacement($tag);
+      }
+      $tag.replace(newTag);
+    }
+    return $.text().replace(/(\r?\n)+/g,'\r\n')
   },
   '_menuScraper': function(html, paths, domain, uri) {
     if (!paths.length) return;
