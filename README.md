@@ -93,8 +93,10 @@ a menu array of the form:
 relative to the document, not to each other (unlike the path arguments
 to `Spatula.Menu`)*
 
-* `parser` is a function receiving the populated template, and returning
-a parsed version of it. This is `Spatula.markdown` by default.
+* `parser` is a function receiving HTML snippets for the template, and
+returning a parsed version of them. This is `Spatula.markdown` by default.
+Explicitly setting `parser` to `false` will populate the template with
+unparsed HTML.
 
 ###Spatula.markdown(html)
 
