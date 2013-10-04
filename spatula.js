@@ -108,14 +108,14 @@ var Spatula = {
       if (path[0] == '/') {
         url = domain + path;
       } else if (! /\:\/\//.test(path)) {
-        var tmpUri = uri.split('/');
-        tmpUri.pop();
+        var tmpUri = uri.replace(/\/(index\.[a-z]+)?$/i,'').split('/');
         while (/^\.\.\//.test(path)) {
           path = path.replace('../','');
           tmpUri.pop();
         }
         path = path.replace('./','');
-        url = domain + tmpUri.join('/') + path;
+        console.log(url);
+        url = domain + tmpUri.join('/') + '/'+ path;
       } else {
         url = path;
       }
