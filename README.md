@@ -89,10 +89,12 @@ a menu array of the form:
 }
 ```
 
+*It is important to note that all of the cheerio paths in `template` are
+relative to the document, not to each other (unlike the path arguments
+to `Spatula.Menu`)*
+
 * `parser` is a function receiving the populated template, and returning
-a parsed version of it. This is `Spatula.markdown` by default. `parser` can
-also be used to perform operations on scraped data, eg. extracting URLs for
-a new set of menus.
+a parsed version of it. This is `Spatula.markdown` by default.
 
 ###Spatula.markdown(html)
 

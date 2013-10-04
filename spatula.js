@@ -1,16 +1,25 @@
 var cheerio = require('cheerio');
 var http = require('http');
+var url = require('url');
 
 var Spatula = {
-  'Menu': function(url) {
+  'Menu': function(reqUrl) {
     var paths = Array.prototype.slice.call(arguments,1);
+    var urlObj = url.parse(reqUrl);
+    var domain = urlObj.protocol + '//' + urlObj.hostname;
+    var uri = urlObj.path;
     for (var i=0;i<10;i++) {
       paths[paths.length] = paths[paths.length-1];
     }
     this.scrape = function(save,template,parser) {
-      http.get(url,function(res){
+      http.get(reqUrl,function(res){
         res.setEncoding('utf8');
-        res.on('data', function(html) {
+        var collector = [];
+        res.on('data', function(chunk) {
+          collector.push(chunk);
+        });
+        res.on('end', function() {
+          var html = collector.join('');
           var menu = Spatula._menuScraper(html, paths, domain, uri);
           Spatula.scrape(save,menu,template,parser);
         });
@@ -18,26 +27,47 @@ var Spatula = {
     }
   },
   'scrape': function(save, menu, template, parser) {
-    parser = parser || Spatula.markdown;
-    if (menu.scrape) {
+    parser = (parser === false) ? function(html){return html;} :
+        parser || Spatula.markdown;
+    if (!menu) {
+      throw "Error: Menu is undefined";
+    } else if (menu.scrape) {
       menu.scrape(save, template, parser);
     } else {
-      //shit, actually scrape stuff (TODO)
+      //for each URL in menu, parse a template and pass it to save
+      menu.forEach( function (e,i) {
+        var reqUrl = e;
+        if (typeof reqUrl !== 'string') {
+          reqUrl = Object.keys(e)[0];
+          Spatula.scrape(save,e[reqUrl],template,parser);
+        }
+        http.get(reqUrl,function(res){
+          res.setEncoding('utf8');
+          var collector = [];
+          res.on('data', function(chunk) {
+            collector.push(chunk);
+          });
+          res.on('end', function() {
+            var html = collector.join('');
+            save(reqUrl,Spatula._parseTemplate(template,html,parser));
+          });
+        });  
+      });
     }
   },
   'markdown': function(html) {
     var replacements = {
-      'p':'r\n\r\n',
-      'ul':'r\n\r\n',
-      'div':'r\n\r\n',
-      'td':'r\n\r\n',
-      'li':' * ',
-      'h1':'#',
-      'h2':'##',
-      'h3':'###',
-      'h4':'####',
-      'h5':'#####',
-      'h6':'######',
+      'p':'\r\n\r\n',
+      'ul':'\r\n\r\n',
+      'div':'\r\n\r\n',
+      'td':'\r\n\r\n',
+      'li':'\r\n * ',
+      'h1':'\r\n# ',
+      'h2':'\r\n## ',
+      'h3':'\r\n### ',
+      'h4':'\r\n#### ',
+      'h5':'\r\n##### ',
+      'h6':'\r\n###### ',
       'a': function ($anchor) {
         return '[' + $anchor.text() + ']('+ $anchor.attr('href')+')';
       },
@@ -46,32 +76,34 @@ var Spatula = {
       'strong': ['**','**'],
       'b': ['**','**']
     }
-    var keys = Object.keys(replacements);
     var $ = cheerio.load(html);
-    for (var i=0; i<keys.length;i++) {
-      var $tag = $(keys[i]);
-      var replacement = replacements[keys[i]];
-      var newTag = '';
-      if (typeof replacement === 'string') {
-        var txt = $tag.html();
-        newTag = replacement + txt;
-      } else if (typeof replacement === 'array') {
-        var txt = $tag.html();
-        newTag = replacement[0] + txt + replacement[1];
-      } else if (typeof replacement === 'function') {
-        newTag = replacement($tag);
-      }
-      $tag.replace(newTag);
+    for (var key in replacements) {
+      var $tags= $(key);
+      var replacement = replacements[key];
+      $tags.each(function(i,tag) {
+        var $tag = $(tag);
+        var newTag = '';
+        if (typeof replacement === 'string') {
+          var txt = $tag.html();
+          newTag = replacement + txt;
+        } else if (replacement instanceof Array) {
+          var txt = $tag.html();
+          newTag = replacement[0] + txt + replacement[1];
+        } else if (typeof replacement === 'function') {
+          newTag = replacement($tag);
+        }
+        $tag.replaceWith(newTag);
+      });
     }
-    return $.text().replace(/(\r?\n)+/g,'\r\n')
+    return $.root().text().replace(/(\r?\n)+/g,'\r\n')
   },
   '_menuScraper': function(html, paths, domain, uri) {
     if (!paths.length) return;
     var $ = cheerio.load(html);
     var menu = $(paths.shift());
     if (!menu) return;
-    menu.map(function(el) {
-      var path = $(el).find('a:first').attr('href');
+    return menu.map(function(i,el) {
+      var path = $(el).attr('href') || $(el).find('a').first().attr('href');
       var url = '';
       if (path[0] == '/') {
         url = domain + path;
@@ -80,8 +112,8 @@ var Spatula = {
       } else {
         url = path;
       }
-      var subMenu = Spatula._menuScraper(el, paths, domain, uri);
-      if (subMenu) {
+      var subMenu = Spatula._menuScraper($(el).html(), paths, domain, uri);
+      if (subMenu && subMenu.length) {
         var obj = {};
         obj[url] = subMenu;
         return obj;
@@ -89,7 +121,24 @@ var Spatula = {
         return url;
       }
     });
+  },
+  '_parseTemplate': function (origTemplate, html, parser) {
+    var template = JSON.parse(JSON.stringify(origTemplate)); //stupid way of cloning a simple object without external deps
+    var $ = cheerio.load(html);
+    for (var key in template) {
+      var val = template[key];
+      if (typeof val === 'string') {
+        template[key] = parser($(val).first().html())
+      } else if (val instanceof Array) {
+        template[key] = $(val).map(function(i,el) {
+          return parser($(el).html());
+        });
+      } else {
+        template[key] = Spatula._parseTemplate(val,html,parser);
+      }
+    }
+    return template;
   }
 };
 
-exports = Spatula;
+module.exports = Spatula;
