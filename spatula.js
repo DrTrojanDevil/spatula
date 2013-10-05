@@ -58,6 +58,7 @@ var Spatula = {
   'markdown': function(html) {
     var replacements = {
       'p':'\r\n\r\n',
+      'br':'\r\n',
       'ul':'\r\n\r\n',
       'div':'\r\n\r\n',
       'td':'\r\n\r\n',
