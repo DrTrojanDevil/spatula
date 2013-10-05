@@ -135,12 +135,13 @@ var Spatula = {
     for (var key in template) {
       var val = template[key];
       if (typeof val === 'string') {
-        template[key] = parser($(val).first().html())
+        var $el = $(val).first();
+        template[key] = $el.attr('src') || parser($el.html())
       } else if (val instanceof Array) {
         template[key] = $(val).map(function(i,el) {
-          return parser($(el).html());
+          return $(el).attr('src') || parser($(el).html());
         });
-      } else {
+      } else { //nested template
         template[key] = Spatula._parseTemplate(val,html,parser);
       }
     }
