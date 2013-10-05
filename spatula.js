@@ -138,7 +138,7 @@ var Spatula = {
         var $el = $(val).first();
         template[key] = $el.attr('src') || parser($el.html())
       } else if (val instanceof Array) {
-        template[key] = $(val).map(function(i,el) {
+        template[key] = $(val[0]).map(function(i,el) {
           return $(el).attr('src') || parser($(el).html());
         });
       } else { //nested template
