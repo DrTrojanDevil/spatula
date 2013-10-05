@@ -131,24 +131,24 @@ var Spatula = {
     });
   },
   '_parseTemplate': function (origTemplate, html, parser) {
-    var template = JSON.parse(JSON.stringify(origTemplate)); //stupid way of cloning a simple object without external deps
+    var newTemplate = {};
     var $ = cheerio.load(html);
-    for (var key in template) {
-      var val = template[key];
+    for (var key in origTemplate) {
+      var val = origTemplate[key];
       if (typeof val === 'string') {
         var $el = $(val).first();
-        template[key] = $el.attr('src') || parser($el.html())
+        newTemplate[key] = $el.attr('src') || parser($el.html())
       } else if (val instanceof Array) {
-        template[key] = $(val[0]).map(function(i,el) {
+        newTemplate[key] = $(val[0]).map(function(i,el) {
           return $(el).attr('src') || parser($(el).html());
         });
       } else if (typeof val === 'function') {
-        template[key] = val($);
+        newTemplate[key] = val($);
       } else { //nested template
-        template[key] = Spatula._parseTemplate(val,html,parser);
+        newTemplate[key] = Spatula._parseTemplate(val,html,parser);
       }
     }
-    return template;
+    return newTemplate;
   }
 };
 
