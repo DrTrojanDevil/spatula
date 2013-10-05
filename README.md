@@ -77,6 +77,9 @@ a menu array of the form:
 {
   "<key>": "<cheerio path>", //string value only return first match
   "<key>": ["<cheerio path"], //single-value array returns all matches
+  "<key>": function($){ //function accepts cheerio and returns template content
+    return $(".menu").split('|');
+  },
   .
   .
   .

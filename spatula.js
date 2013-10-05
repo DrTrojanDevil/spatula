@@ -142,6 +142,8 @@ var Spatula = {
         template[key] = $(val[0]).map(function(i,el) {
           return $(el).attr('src') || parser($(el).html());
         });
+      } else if (typeof val === 'function') {
+        template[key] = val($);
       } else { //nested template
         template[key] = Spatula._parseTemplate(val,html,parser);
       }
