@@ -38,7 +38,7 @@ var Spatula = {
     if (!menu) {
       throw "Error: Menu is undefined";
     } else if (menu.scrape) {
-      menu.scrape(save, template, parser);
+      menu.scrape(save, template, parser, encoding);
     } else {
       //for each URL in menu, parse a template and pass it to save
       menu.forEach( function (e,i) {
