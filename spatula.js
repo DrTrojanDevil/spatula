@@ -1,6 +1,7 @@
 var cheerio = require('cheerio');
 var http = require('http');
 var url = require('url');
+var Iconv = require('iconv').Iconv;
 
 var Spatula = {
   'Menu': function(reqUrl) {
@@ -11,7 +12,7 @@ var Spatula = {
     for (var i=0;i<10;i++) {
       paths[paths.length] = paths[paths.length-1];
     }
-    this.scrape = function(save,template,parser) {
+    this.scrape = function(save,template,parser,encoding) {
       http.get(reqUrl,function(res){
         res.setEncoding('utf8');
         var collector = [];
@@ -21,14 +22,19 @@ var Spatula = {
         res.on('end', function() {
           var html = collector.join('');
           var menu = Spatula._menuScraper(html, paths, domain, uri);
-          Spatula.scrape(save,menu,template,parser);
+          Spatula.scrape(save,menu,template,parser,encoding);
         });
       });
     }
   },
-  'scrape': function(save, menu, template, parser) {
+  'scrape': function(save, menu, template, parser, encoding) {
     parser = (parser === false) ? function(html){return html;} :
         parser || Spatula.markdown;
+    encoding = ( /^utf\-?8$/i.test(encoding) ) ? 'utf8' :
+     (encoding) ? encoding : 'utf8';
+    if (encoding != 'utf8') {
+      var iconv = new Iconv(encoding,'UTF-8');
+    }
     if (!menu) {
       throw "Error: Menu is undefined";
     } else if (menu.scrape) {
@@ -42,13 +48,17 @@ var Spatula = {
           Spatula.scrape(save,e[reqUrl],template,parser);
         }
         http.get(reqUrl,function(res){
-          res.setEncoding('utf8');
           var collector = [];
           res.on('data', function(chunk) {
             collector.push(chunk);
           });
           res.on('end', function() {
-            var html = collector.join('');
+            var html = Buffer.concat(collector);
+            if (encoding == 'utf8') {
+              html = html.toString();
+            } else {
+              html = iconv.convert(html).toString();
+            }
             save(reqUrl,Spatula._parseTemplate(template,html,parser));
           });
         });  
