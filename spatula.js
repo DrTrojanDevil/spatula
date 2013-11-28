@@ -118,6 +118,7 @@ var Spatula = {
   },
   '_menuScraper': function(html, paths, domain, uri) {
     if (!paths.length) return;
+    paths = paths.slice();
     var $ = cheerio.load(html);
     var menu = $(paths.shift());
     if (!menu) return;
