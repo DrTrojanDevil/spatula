@@ -72,12 +72,12 @@ var Spatula = {
       'ol': function ($ol) {
         return '\r\n\r\n'+$ol.children('li').map(function(i){
           return (i+1)+'. '+$(this).html();
-        }).get().join('\r\n')+'\r\n\r\n';
+        }).join('\r\n')+'\r\n\r\n';
       },
       'ul': function ($ul) {
         return '\r\n\r\n'+$ul.children('li').map(function(i){
           return ' * '+$(this).html();
-        }).get().join('\r\n')+'\r\n\r\n';
+        }).join('\r\n')+'\r\n\r\n';
       },
       'div':'\r\n\r\n',
       'td':'\r\n\r\n',
